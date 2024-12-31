@@ -2,39 +2,25 @@
 
 import React, { useEffect, useState } from "react";
 import { User, LogOut } from "lucide-react";
-import { login } from "@/utils/api";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      // Validate token or fetch user details here
-      setIsLoggedIn(true);
-      const email = localStorage.getItem("userEmail") || "user@example.com"; // Assume email is stored after login
-      setUserEmail(email);
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        setIsLoggedIn(true);
+        const email = localStorage.getItem("userEmail") || "";
+        setUserEmail(email);
+      }
     }
   }, []);
-
-  const handleLogin = async () => {
-    try {
-      setLoading(true);
-      const credentials = { email: "user@example.com", password: "password123" };
-      const response = await login(credentials);
-      localStorage.setItem("token", response.token);
-      localStorage.setItem("userEmail", response.user.email); // Store user email
-      setUserEmail(response.user.email);
-      setIsLoggedIn(true);
-    } catch (error) {
-      console.error("Login failed:", error.response?.data || error.message);
-      alert("Login failed. Please check your credentials.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -61,8 +47,9 @@ const Navbar = () => {
       localStorage.removeItem("userEmail");
       setIsLoggedIn(false);
       setUserEmail("");
+      router.push("/auth/login"); // Redirect after logout
     } catch (error) {
-      console.error("Logout failed:", error.response?.data || error.message);
+      console.error("Logout failed:", error);
       alert("Logout failed. Please try again.");
     } finally {
       setLoading(false);
@@ -81,7 +68,7 @@ const Navbar = () => {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <User className="w-5 h-5" />
-                  <span>{userEmail}</span>
+                  <span>{userEmail || "User"}</span>
                 </div>
                 <button
                   onClick={handleLogout}
@@ -93,13 +80,14 @@ const Navbar = () => {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={handleLogin}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                disabled={loading}
-              >
-                {loading ? "Logging in..." : "Login"}
-              </button>
+              <Link href="/auth/login">
+                <button
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  disabled={loading}
+                >
+                  {loading ? "Logging in..." : "Login"}
+                </button>
+              </Link>
             )}
           </div>
         </div>
